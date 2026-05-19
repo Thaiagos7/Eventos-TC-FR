@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { getPostLoginRedirectUrl } from "@/lib/authRedirect";
 import { supabase } from "@/lib/supabase";
 
 export type UserRole = "admin" | "professor" | "aluno";
@@ -26,6 +27,7 @@ interface AuthContextType {
   loading: boolean;
 
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<{ ok: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
@@ -139,6 +141,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return !error;
   }, []);
 
+  const loginWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: getPostLoginRedirectUrl(),
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    return { ok: true };
+  }, []);
+
   const register = useCallback(async (name: string, email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -188,6 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       loading,
       login,
+      loginWithGoogle,
       register,
       logout,
       updateProfile,
@@ -196,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAluno,
       canManageEvents,
     }),
-    [user, session, loading, login, register, logout, updateProfile, isAdmin, isProfessor, isAluno, canManageEvents]
+    [user, session, loading, login, loginWithGoogle, register, logout, updateProfile, isAdmin, isProfessor, isAluno, canManageEvents]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

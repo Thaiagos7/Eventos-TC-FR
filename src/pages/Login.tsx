@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.png';
@@ -16,9 +17,11 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const authBusy = submitting || googleLoading;
 
   const handleClearSession = () => {
     try {
@@ -49,7 +52,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (submitting) return;
+    if (authBusy) return;
 
     if (!email.trim() || !password.trim()) {
       toast.error('Preencha todos os campos.');
@@ -74,6 +77,27 @@ const Login = () => {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (authBusy) return;
+
+    try {
+      setGoogleLoading(true);
+      const { ok, error } = await loginWithGoogle();
+
+      if (!ok) {
+        toast.error('Não foi possível iniciar o login com Google.', {
+          description: error ?? 'Verifique se o Google OAuth está ativo no Supabase.',
+        });
+        setGoogleLoading(false);
+      }
+    } catch (err) {
+      toast.error('Erro ao iniciar login com Google.', {
+        description: err instanceof Error ? err.message : 'Tente novamente.',
+      });
+      setGoogleLoading(false);
     }
   };
 
@@ -129,7 +153,7 @@ const Login = () => {
                         className="pl-11"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        disabled={submitting}
+                        disabled={authBusy}
                       />
                     </div>
                   </div>
@@ -145,24 +169,39 @@ const Login = () => {
                         className="pl-11 pr-11"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        disabled={submitting}
+                        disabled={authBusy}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                        disabled={submitting}
+                        disabled={authBusy}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
 
-                  <Button type="submit" className="group w-full" size="lg" disabled={submitting}>
+                  <Button type="submit" className="group w-full" size="lg" disabled={authBusy}>
                     {submitting ? 'A entrar...' : 'Entrar'}
                     <ArrowRight className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-1" />
                   </Button>
                 </form>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <span className="w-full border-t border-foreground/10" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase tracking-[0.14em]">
+                    <span className="bg-[hsl(var(--paper-strong))] px-3 text-muted-foreground">ou</span>
+                  </div>
+                </div>
+
+                <GoogleSignInButton
+                  onClick={handleGoogleLogin}
+                  loading={googleLoading}
+                  disabled={authBusy}
+                />
 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
