@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession ?? null);
       const u = newSession?.user ?? null;
 
@@ -117,17 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      try {
-        setUser(await fetchProfile(u));
-      } catch {
-
-        setUser({
-          id: u.id,
-          email: u.email ?? "",
-          name: (u.user_metadata?.name as string) ?? "",
-          role: "aluno",
-        });
-      }
+      // Evita deadlock: não chamar o client Supabase diretamente dentro deste callback.
+      setTimeout(() => {
+        void (async () => {
+          try {
+            setUser(await fetchProfile(u));
+          } catch {
+            setUser({
+              id: u.id,
+              email: u.email ?? "",
+              name: (u.user_metadata?.name as string) ?? "",
+              role: "aluno",
+            });
+          }
+        })();
+      }, 0);
     });
 
     return () => {
@@ -137,8 +141,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password }),
+        15000,
+      );
+      return !error;
+    } catch {
+      return false;
+    }
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
