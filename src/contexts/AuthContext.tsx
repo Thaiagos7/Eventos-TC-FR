@@ -153,10 +153,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
+    const redirectTo = getPostLoginRedirectUrl();
+    sessionStorage.setItem("eventostc-oauth-redirect", redirectTo);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: getPostLoginRedirectUrl(),
+        redirectTo,
         queryParams: {
           prompt: "select_account",
         },

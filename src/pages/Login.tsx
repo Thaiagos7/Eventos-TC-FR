@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,15 @@ const Login = () => {
 
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const authBusy = submitting || googleLoading;
+
+  useEffect(() => {
+    const oauthError = (location.state as { oauthError?: string } | null)?.oauthError;
+    if (!oauthError) return;
+    toast.error('Erro no login com Google.', { description: oauthError });
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
 
   const handleClearSession = () => {
     try {
