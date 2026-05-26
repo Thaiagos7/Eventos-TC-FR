@@ -27,6 +27,10 @@ const EventoDetalhe = () => {
     if (id) incrementViews(id);
   }, [id]);
 
+  useEffect(() => {
+    if (id) getEventParticipants(id);
+  }, [id, getEventParticipants]);
+
   if (!event) {
     return (
       <div className="min-h-screen flex flex-col">

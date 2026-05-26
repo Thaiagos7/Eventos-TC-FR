@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
 import type { Event, Participant } from '@/data/mockData';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAnonKey, supabaseUrl } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface EventContextType {
@@ -37,6 +37,104 @@ const EventContext = createContext<EventContextType | undefined>(undefined);
 // Tipos mínimos das rows vindas do Supabase (evita `any`)
 type EventRow = Record<string, unknown>;
 type ParticipantRow = Record<string, unknown>;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error('timeout')), ms);
+    promise
+      .then((value) => {
+        window.clearTimeout(timeout);
+        resolve(value);
+      })
+      .catch((error) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      });
+  });
+}
+
+function getStoredAccessToken(): string | null {
+  try {
+    const raw = window.localStorage.getItem('eventostc-auth');
+    if (!raw) return null;
+
+    const session = JSON.parse(raw) as { access_token?: string; expires_at?: number };
+    if (session.expires_at && session.expires_at * 1000 <= Date.now()) return null;
+
+    return session.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getStoredUserId(): string | null {
+  try {
+    const raw = window.localStorage.getItem('eventostc-auth');
+    if (!raw) return null;
+
+    const session = JSON.parse(raw) as { user?: { id?: string } };
+    return session.user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function authHeaders() {
+  const token = getStoredAccessToken();
+  return {
+    apikey: supabaseAnonKey,
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+async function fetchEventsViaRest(): Promise<EventRow[]> {
+  const token = getStoredAccessToken();
+  const response = await fetch(`${supabaseUrl}/rest/v1/events?select=*&order=created_at.desc`, {
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load events: ${response.status}`);
+  }
+
+  return (await response.json()) as EventRow[];
+}
+
+async function fetchParticipantsViaRest(eventId: string): Promise<ParticipantRow[]> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/participants?event_id=eq.${eventId}&select=*`, {
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load participants: ${response.status}`);
+  }
+
+  return (await response.json()) as ParticipantRow[];
+}
+
+async function insertParticipantViaRest(participant: {
+  id: string;
+  event_id: string;
+  user_id: string | null;
+  name: string;
+  email: string;
+  role: Participant['role'];
+  attendance: Participant['attendance'];
+}) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/participants`, {
+    method: 'POST',
+    headers: {
+      ...authHeaders(),
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify(participant),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to register participant: ${response.status}`);
+  }
+}
 
 // ---------- helpers: mapping DB <-> app types ----------
 function rowToEvent(r: EventRow): Event {
@@ -208,10 +306,31 @@ export function EventProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let data: unknown[] | null = null;
+      let error: unknown = null;
+
+      try {
+        data = await fetchEventsViaRest();
+      } catch (err) {
+        error = err;
+      }
+
+      if (error) {
+        try {
+        const result = await withTimeout(
+          supabase
+            .from('events')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          6000,
+        );
+
+        data = result.data;
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+      }
 
       if (cancelled) return;
 
@@ -350,7 +469,25 @@ export function EventProvider({ children }: { children: ReactNode }) {
   const loadParticipantsForEvent = useCallback(async (eventId: string) => {
     if (loadedParticipantsFor.has(eventId)) return;
 
-    const { data, error } = await supabase.from('participants').select('*').eq('event_id', eventId);
+    let data: unknown[] | null = null;
+    let error: unknown = null;
+
+    try {
+      data = await fetchParticipantsViaRest(eventId);
+    } catch (err) {
+      error = err;
+    }
+
+    if (error) {
+      try {
+        const result = await withTimeout(supabase.from('participants').select('*').eq('event_id', eventId), 5000);
+        data = result.data;
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+    }
+
     if (error) {
       console.error('Failed to load participants:', error);
       return;
@@ -393,10 +530,9 @@ export function EventProvider({ children }: { children: ReactNode }) {
       setEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, currentParticipants: e.currentParticipants + 1 } : e)));
 
       (async () => {
-        const { data: session } = await supabase.auth.getSession();
-        const uid = session.session?.user?.id ?? null;
+        const uid = getStoredUserId();
 
-        const { error } = await supabase.from('participants').insert({
+        const payload = {
           id: optimisticId,
           event_id: eventId,
           user_id: uid,
@@ -404,7 +540,24 @@ export function EventProvider({ children }: { children: ReactNode }) {
           email,
           role,
           attendance: 'pending',
-        });
+        };
+
+        let error: unknown = null;
+
+        try {
+          await insertParticipantViaRest(payload);
+        } catch (err) {
+          error = err;
+        }
+
+        if (error) {
+          try {
+            const result = await withTimeout(supabase.from('participants').insert(payload), 5000);
+            error = result.error;
+          } catch (err) {
+            error = err;
+          }
+        }
 
         if (error) {
           console.error('Failed to register participant:', error);

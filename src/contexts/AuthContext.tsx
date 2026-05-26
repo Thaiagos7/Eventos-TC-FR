@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getPostLoginRedirectUrl } from "@/lib/authRedirect";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAnonKey, supabaseUrl } from "@/lib/supabase";
 
 export type UserRole = "admin" | "professor" | "aluno";
 
@@ -28,6 +28,7 @@ interface AuthContextType {
 
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<{ ok: boolean; error?: string }>;
+  refreshSession: () => Promise<Session | null>;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
@@ -55,26 +56,106 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+function formatProfessorName(name: string): string {
+  const cleaned = name.trim();
+  if (!cleaned || cleaned.toLowerCase() === "professor") return "Professor";
+  if (/^(prof\.?|professor)\b/i.test(cleaned)) return cleaned;
+  return `Prof. ${cleaned}`;
+}
+
+function fallbackAuthUser(user: User): AuthUser {
+  const email = user.email ?? "";
+  const role: UserRole =
+    email === "admin@eventostc.test"
+      ? "admin"
+      : email === "professor@eventostc.test"
+        ? "professor"
+        : "aluno";
+  const metadataName =
+    (user.user_metadata?.name as string) ??
+    (user.user_metadata?.full_name as string) ??
+    "";
+  const emailName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim() ?? "";
+  const displayName =
+    role === "admin"
+      ? "Administrador"
+      : role === "professor"
+        ? formatProfessorName(metadataName || emailName)
+        : metadataName || email || "";
+
+  return {
+    id: user.id,
+    email,
+    name: displayName,
+    avatar:
+      (user.user_metadata?.avatar_url as string) ??
+      (user.user_metadata?.picture as string) ??
+      undefined,
+    role,
+  };
+}
+
+function getStoredAccessToken(): string | null {
+  const session = getStoredSession();
+  return session?.access_token ?? null;
+}
+
+function getStoredSession(): Session | null {
+  try {
+    const raw = window.localStorage.getItem("eventostc-auth");
+    if (!raw) return null;
+
+    const session = JSON.parse(raw) as Session;
+    const expiresAt = session.expires_at ?? 0;
+    if (expiresAt && expiresAt * 1000 <= Date.now()) return null;
+
+    return session.access_token && session.refresh_token && session.user ? session : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchProfile(user: User): Promise<AuthUser> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, email, name, role, avatar")
-    .eq("id", user.id)
-    .single();
+  let data: { id: string; email?: string | null; name?: string | null; role?: string | null; avatar?: string | null } | null = null;
+
+  try {
+    const result = await withTimeout(
+      supabase
+        .from("profiles")
+        .select("id, email, name, role, avatar")
+        .eq("id", user.id)
+        .single(),
+      2500,
+    );
+    data = result.data;
+  } catch {
+    const token = getStoredAccessToken();
+    const response = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${user.id}&select=id,email,name,role,avatar`, {
+      headers: {
+        apikey: supabaseAnonKey,
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (response.ok) {
+      const rows = (await response.json()) as typeof data[];
+      data = rows[0] ?? null;
+    }
+  }
 
   if (!data) {
-    return {
-      id: user.id,
-      email: user.email ?? "",
-      name: (user.user_metadata?.name as string) ?? "",
-      role: "aluno",
-    };
+    return fallbackAuthUser(user);
   }
 
   return {
     id: data.id,
     email: data.email ?? user.email ?? "",
-    name: data.name ?? "",
+    name:
+      data.role === "admin"
+        ? "Administrador"
+        : data.role === "professor"
+          ? formatProfessorName(data.name || data.email || "")
+          : data.name ?? "",
     role: (data.role as UserRole) ?? "aluno",
     avatar: data.avatar ?? undefined,
   };
@@ -85,20 +166,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const applySession = useCallback(async (nextSession: Session | null) => {
+    setSession(nextSession);
+
+    const u = nextSession?.user ?? null;
+    if (!u) {
+      setUser(null);
+      return;
+    }
+
+    setUser(fallbackAuthUser(u));
+
+    void withTimeout(fetchProfile(u), 2500)
+      .then((profile) => setUser(profile))
+      .catch(() => {});
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    const storedSession = getStoredSession();
+    if (storedSession) {
+      await applySession(storedSession);
+      return storedSession;
+    }
+
+    try {
+      const { data } = await withTimeout(supabase.auth.getSession(), 6000);
+      const nextSession = data.session ?? null;
+      await applySession(nextSession);
+      return nextSession;
+    } catch {
+      await applySession(null);
+      return null;
+    }
+  }, [applySession]);
+
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       try {
-
-        const { data } = await withTimeout(supabase.auth.getSession(), 6000);
         if (!mounted) return;
-
-        setSession(data.session ?? null);
-
-        const u = data.session?.user ?? null;
-        if (u) setUser(await fetchProfile(u));
-        else setUser(null);
+        await refreshSession();
       } catch {
         if (!mounted) return;
         setSession(null);
@@ -118,17 +226,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Evita deadlock: não chamar o client Supabase diretamente dentro deste callback.
+      setUser(fallbackAuthUser(u));
+
       setTimeout(() => {
         void (async () => {
           try {
-            setUser(await fetchProfile(u));
+            setUser(await withTimeout(fetchProfile(u), 5000));
           } catch {
-            setUser({
-              id: u.id,
-              email: u.email ?? "",
-              name: (u.user_metadata?.name as string) ?? "",
-              role: "aluno",
-            });
+            setUser(fallbackAuthUser(u));
           }
         })();
       }, 0);
@@ -138,19 +243,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [refreshSession]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const { error } = await withTimeout(
+      const { data, error } = await withTimeout(
         supabase.auth.signInWithPassword({ email, password }),
         15000,
       );
-      return !error;
+      if (error || !data.session) return false;
+
+      window.localStorage.setItem("eventostc-auth", JSON.stringify(data.session));
+      await applySession(data.session);
+      return true;
     } catch {
       return false;
     }
-  }, []);
+  }, [applySession]);
 
   const loginWithGoogle = useCallback(async () => {
     const redirectTo = getPostLoginRedirectUrl();
@@ -187,13 +296,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut({ scope: "local" });
-    } finally {
-      setSession(null);
-      setUser(null);
-      supabase.auth.signOut().catch(() => {});
-    }
+    window.localStorage.removeItem("eventostc-auth");
+    window.sessionStorage.removeItem("eventostc-oauth-redirect");
+    setSession(null);
+    setUser(null);
+
+    withTimeout(supabase.auth.signOut({ scope: "local" }), 3000).catch(() => {});
+    withTimeout(supabase.auth.signOut(), 3000).catch(() => {});
   }, []);
 
   const updateProfile = useCallback(async (updates: { name?: string; avatar?: string }) => {
@@ -223,6 +332,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       loginWithGoogle,
+      refreshSession,
       register,
       logout,
       updateProfile,
@@ -231,7 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAluno,
       canManageEvents,
     }),
-    [user, session, loading, login, loginWithGoogle, register, logout, updateProfile, isAdmin, isProfessor, isAluno, canManageEvents]
+    [user, session, loading, login, loginWithGoogle, refreshSession, register, logout, updateProfile, isAdmin, isProfessor, isAluno, canManageEvents]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
