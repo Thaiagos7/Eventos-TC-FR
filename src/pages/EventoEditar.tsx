@@ -10,6 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents } from '@/contexts/EventContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 
+type EditLocationState = {
+  from?: string;
+};
+
 const EventoEditar = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -18,7 +22,7 @@ const EventoEditar = () => {
   const { events, updateEvent, getEventParticipants } = useEvents();
   const { addNotification } = useNotifications();
 
-  const returnTo = (location.state as any)?.from || '/dashboard';
+  const returnTo = (location.state as EditLocationState | null)?.from || '/dashboard';
   const event = events.find((e) => e.id === id);
 
   const canEdit =

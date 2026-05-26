@@ -310,7 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const u = data.session?.user;
     if (!u) return;
 
-    const payload: any = {};
+    const payload: Record<string, string> = {};
     if (updates.name !== undefined) payload.name = updates.name;
     if (updates.avatar !== undefined) payload.avatar = updates.avatar;
 

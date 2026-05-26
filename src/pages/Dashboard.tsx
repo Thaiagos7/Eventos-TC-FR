@@ -20,6 +20,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 
+type StatusFilter = 'all' | 'approved' | 'pending' | 'rejected';
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, canManageEvents, isAdmin, isProfessor } = useAuth();
@@ -27,7 +29,7 @@ const Dashboard = () => {
 
   const [selectedTypes, setSelectedTypes] = useState<Event['type'][]>([]);
   const [selectedDate, setSelectedDate] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
 
   const allEvents = events;
@@ -140,7 +142,7 @@ const Dashboard = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Pesquisar eventos..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
@@ -181,7 +183,7 @@ const Dashboard = () => {
                       <div className="font-medium text-foreground line-clamp-1 text-safe">{event.title}</div>
                       <div className="text-sm text-muted-foreground">{event.organizerName}</div>
                     </td>
-                    <td className="py-4 px-5"><Badge variant={eventTypeColors[event.type] as any}>{event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}</Badge></td>
+                    <td className="py-4 px-5"><Badge variant={eventTypeColors[event.type]}>{event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}</Badge></td>
                     <td className="py-4 px-5 text-sm">
                       <div>{format(event.date, "d MMM yyyy", { locale: pt })}</div>
                       <div className="text-muted-foreground">{event.time}</div>

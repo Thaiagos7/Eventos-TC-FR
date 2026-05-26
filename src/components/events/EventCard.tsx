@@ -26,7 +26,7 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
     >
       <div className="mb-4 rounded-[1.5rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] p-4 poster-grid-bg">
         <div className="mb-4 flex flex-wrap gap-2">
-          <Badge variant={eventTypeColors[event.type] as any}>{eventTypeLabels[event.type]}</Badge>
+          <Badge variant={eventTypeColors[event.type]}>{eventTypeLabels[event.type]}</Badge>
           {isFull && <Badge variant="destructive">Esgotado</Badge>}
           {isAlmostFull && !isFull && <Badge variant="secondary">Últimas vagas</Badge>}
         </div>

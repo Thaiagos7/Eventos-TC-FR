@@ -70,7 +70,7 @@ const EventParticipants = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant={eventTypeColors[event.type] as any}>
+                <Badge variant={eventTypeColors[event.type]}>
                   {eventTypeLabels[event.type]}
                 </Badge>
               </div>

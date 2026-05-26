@@ -63,7 +63,6 @@ export const mockEvents: Event[] = [];
 
 export const mockParticipants: Participant[] = [];
 
-
 export const mockUserProfile: UserProfile = {
   id: 'u1',
   name: '',
@@ -85,7 +84,17 @@ export const eventTypeLabels: Record<Event['type'], string> = {
   other: 'Outro',
 };
 
-export const eventTypeColors: Record<Event['type'], string> = {
+type EventTypeColor =
+  | 'theater'
+  | 'presentation'
+  | 'lecture'
+  | 'fair'
+  | 'default'
+  | 'secondary'
+  | 'success'
+  | 'outline';
+
+export const eventTypeColors = {
   theater: 'theater',
   presentation: 'presentation',
   lecture: 'lecture',
@@ -94,4 +103,4 @@ export const eventTypeColors: Record<Event['type'], string> = {
   exhibition: 'secondary',
   sports: 'success',
   other: 'outline',
-};
+} satisfies Record<Event['type'], EventTypeColor>;

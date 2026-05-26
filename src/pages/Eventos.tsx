@@ -116,7 +116,7 @@ const Eventos = () => {
               >
                 <div className="mb-4 rounded-[1.5rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] p-4 poster-grid-bg">
                   <div className="mb-4 flex flex-wrap gap-2">
-                    <Badge variant={eventTypeColors[event.type] as any}>
+                    <Badge variant={eventTypeColors[event.type]}>
                       {event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}
                     </Badge>
                     {isCompleted && <Badge variant="secondary">Concluído</Badge>}

@@ -116,7 +116,7 @@ const EventosPendentes = () => {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-medium text-foreground text-lg">{event.title}</h3>
-                              <Badge variant={eventTypeColors[event.type] as any}>
+                              <Badge variant={eventTypeColors[event.type]}>
                                 {event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}
                               </Badge>
                             </div>

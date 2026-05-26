@@ -37,6 +37,7 @@ const EventContext = createContext<EventContextType | undefined>(undefined);
 // Tipos mínimos das rows vindas do Supabase (evita `any`)
 type EventRow = Record<string, unknown>;
 type ParticipantRow = Record<string, unknown>;
+type EventInsertPayload = ReturnType<typeof eventToInsertPayload>;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -169,9 +170,9 @@ function rowToEvent(r: EventRow): Event {
     views: getNum('views', 0),
     enableAttendance: getBool('enable_attendance'),
 
-    dateMode: (typeof r['date_mode'] === 'string' ? (r['date_mode'] as any) : 'single'),
+    dateMode: (typeof r['date_mode'] === 'string' ? (r['date_mode'] as Event['dateMode']) : 'single'),
     dates: Array.isArray(r['dates']) ? (r['dates'] as string[]).map((d) => new Date(d)) : undefined,
-    timeExceptions: Array.isArray(r['time_exceptions']) ? (r['time_exceptions'] as any[]) : undefined,
+    timeExceptions: Array.isArray(r['time_exceptions']) ? (r['time_exceptions'] as Event['timeExceptions']) : undefined,
 
     hasMaxParticipants: typeof r['has_max_participants'] === 'boolean' ? (r['has_max_participants'] as boolean) : true,
     createdAt: typeof r['created_at'] === 'string' ? new Date(r['created_at'] as string) : undefined,
@@ -317,19 +318,19 @@ export function EventProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         try {
-        const result = await withTimeout(
-          supabase
-            .from('events')
-            .select('*')
-            .order('created_at', { ascending: false }),
-          6000,
-        );
+          const result = await withTimeout(
+            supabase
+              .from('events')
+              .select('*')
+              .order('created_at', { ascending: false }),
+            6000,
+          );
 
-        data = result.data;
-        error = result.error;
-      } catch (err) {
-        error = err;
-      }
+          data = result.data;
+          error = result.error;
+        } catch (err) {
+          error = err;
+        }
       }
 
       if (cancelled) return;
@@ -365,7 +366,7 @@ export function EventProvider({ children }: { children: ReactNode }) {
       setEvents((prev) => [newEvent, ...prev]);
 
       (async () => {
-        const payload: any = eventToInsertPayload({ ...newEvent, id });
+        const payload: EventInsertPayload = eventToInsertPayload({ ...newEvent, id });
 
         if (user?.id) {
           payload.organizer_id = user.id;
@@ -392,7 +393,7 @@ export function EventProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       const payload = updatePayloadFromPartial(data);
-      const { error } = await supabase.from('events').update(payload as any).eq('id', id);
+      const { error } = await supabase.from('events').update(payload).eq('id', id);
       if (error) {
         console.error('Failed to update event:', error);
         const { data: fresh } = await supabase.from('events').select('*').eq('id', id).single();

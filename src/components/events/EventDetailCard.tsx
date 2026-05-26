@@ -40,7 +40,7 @@ export function EventDetailCard({ event, onRegister, onEdit, onCancel, onApprove
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={eventTypeColors[event.type] as any}>
+            <Badge variant={eventTypeColors[event.type]}>
               {event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}
             </Badge>
             <Badge variant={event.status === 'upcoming' ? 'success' : event.status === 'cancelled' ? 'destructive' : 'secondary'}>

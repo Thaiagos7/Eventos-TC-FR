@@ -253,7 +253,7 @@ export function DateModeSelector({
             <Calendar
               mode="multiple"
               selected={dates}
-              onSelect={handleScatteredSelect as any}
+              onSelect={handleScatteredSelect}
               disabled={(date: Date) => date < new Date()}
               className="p-3 pointer-events-auto"
             />

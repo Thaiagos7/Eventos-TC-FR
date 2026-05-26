@@ -25,7 +25,7 @@ const EventoDetalhe = () => {
 
   useEffect(() => {
     if (id) incrementViews(id);
-  }, [id]);
+  }, [id, incrementViews]);
 
   useEffect(() => {
     if (id) getEventParticipants(id);
