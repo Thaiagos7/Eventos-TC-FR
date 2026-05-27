@@ -12,6 +12,17 @@ export default defineConfig(() => ({
     },
   },
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          supabase: ["@supabase/supabase-js"],
+          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-select"],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
