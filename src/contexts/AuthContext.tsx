@@ -9,17 +9,10 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getPostLoginRedirectUrl } from "@/lib/authRedirect";
+import { fallbackAuthUser, profileRowToAuthUser, type AuthUser, type ProfileRow, type UserRole } from "@/lib/authProfile";
 import { supabase, supabaseAnonKey, supabaseUrl } from "@/lib/supabase";
 
-export type UserRole = "admin" | "professor" | "aluno";
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-}
+export type { AuthUser, UserRole } from "@/lib/authProfile";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -56,45 +49,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-function formatProfessorName(name: string): string {
-  const cleaned = name.trim();
-  if (!cleaned || cleaned.toLowerCase() === "professor") return "Professor";
-  if (/^(prof\.?|professor)\b/i.test(cleaned)) return cleaned;
-  return `Prof. ${cleaned}`;
-}
-
-function fallbackAuthUser(user: User): AuthUser {
-  const email = user.email ?? "";
-  const role: UserRole =
-    email === "admin@eventostc.test"
-      ? "admin"
-      : email === "professor@eventostc.test"
-        ? "professor"
-        : "aluno";
-  const metadataName =
-    (user.user_metadata?.name as string) ??
-    (user.user_metadata?.full_name as string) ??
-    "";
-  const emailName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim() ?? "";
-  const displayName =
-    role === "admin"
-      ? "Administrador"
-      : role === "professor"
-        ? formatProfessorName(metadataName || emailName)
-        : metadataName || email || "";
-
-  return {
-    id: user.id,
-    email,
-    name: displayName,
-    avatar:
-      (user.user_metadata?.avatar_url as string) ??
-      (user.user_metadata?.picture as string) ??
-      undefined,
-    role,
-  };
-}
-
 function getStoredAccessToken(): string | null {
   const session = getStoredSession();
   return session?.access_token ?? null;
@@ -116,7 +70,7 @@ function getStoredSession(): Session | null {
 }
 
 async function fetchProfile(user: User): Promise<AuthUser> {
-  let data: { id: string; email?: string | null; name?: string | null; role?: string | null; avatar?: string | null } | null = null;
+  let data: ProfileRow | null = null;
 
   try {
     const result = await withTimeout(
@@ -138,7 +92,7 @@ async function fetchProfile(user: User): Promise<AuthUser> {
     });
 
     if (response.ok) {
-      const rows = (await response.json()) as typeof data[];
+      const rows = (await response.json()) as ProfileRow[];
       data = rows[0] ?? null;
     }
   }
@@ -147,18 +101,7 @@ async function fetchProfile(user: User): Promise<AuthUser> {
     return fallbackAuthUser(user);
   }
 
-  return {
-    id: data.id,
-    email: data.email ?? user.email ?? "",
-    name:
-      data.role === "admin"
-        ? "Administrador"
-        : data.role === "professor"
-          ? formatProfessorName(data.name || data.email || "")
-          : data.name ?? "",
-    role: (data.role as UserRole) ?? "aluno",
-    avatar: data.avatar ?? undefined,
-  };
+  return profileRowToAuthUser(data, user.email ?? "");
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
