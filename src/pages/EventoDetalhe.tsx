@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents } from '@/contexts/EventContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { generateCertificatePDF, generateCertificatesBulk } from '@/lib/exportUtils';
+import { getVisibleParticipantCount } from '@/lib/participantCounts';
 
 const EventoDetalhe = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,7 @@ const EventoDetalhe = () => {
 
   const userIsRegistered = user ? isRegistered(event.id, user.email) : false;
   const eventParticipants = getEventParticipants(event.id);
+  const visibleParticipantCount = getVisibleParticipantCount(event, eventParticipants, canManageEvents);
   const gallery = event.galleryImages || [];
   const isOpenEvent = event.registrationType === 'open';
   const isCompleted = event.status === 'completed';
@@ -296,7 +298,7 @@ const EventoDetalhe = () => {
                 )
               ) : (
                 <p className="text-muted-foreground">
-                  {eventParticipants.length} {eventParticipants.length === 1 ? 'inscrito' : 'inscritos'} neste evento.
+                  {visibleParticipantCount} {visibleParticipantCount === 1 ? 'inscrito' : 'inscritos'} neste evento.
                 </p>
               )}
             </div>

@@ -38,6 +38,7 @@ interface EventContextType {
 
   isRegistered: (eventId: string, email: string) => boolean;
   getEventParticipants: (eventId: string) => Participant[];
+  loadParticipantsForUser: (email: string) => Promise<void>;
 }
 
 const EventContext = createContext<EventContextType | undefined>(undefined);
@@ -119,6 +120,21 @@ async function fetchParticipantsViaRest(eventId: string): Promise<ParticipantRow
   return (await response.json()) as ParticipantRow[];
 }
 
+async function fetchParticipantsForUserViaRest(email: string): Promise<ParticipantRow[]> {
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/participants?email=eq.${encodeURIComponent(email)}&select=*`,
+    {
+      headers: authHeaders(),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to load user participants: ${response.status}`);
+  }
+
+  return (await response.json()) as ParticipantRow[];
+}
+
 async function insertParticipantViaRest(participant: {
   id: string;
   event_id: string;
@@ -159,6 +175,7 @@ export function EventProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loadedParticipantsFor, setLoadedParticipantsFor] = useState<Set<string>>(() => new Set());
+  const [loadedParticipantsForUsers, setLoadedParticipantsForUsers] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (loading) return;
@@ -364,6 +381,48 @@ export function EventProvider({ children }: { children: ReactNode }) {
     setLoadedParticipantsFor((prev) => new Set([...prev, eventId]));
   }, [loadedParticipantsFor]);
 
+  const loadParticipantsForUser = useCallback(async (email: string) => {
+    const normalizedEmail = email.toLowerCase();
+    if (loadedParticipantsForUsers.has(normalizedEmail)) return;
+
+    let data: unknown[] | null = null;
+    let error: unknown = null;
+
+    try {
+      data = await fetchParticipantsForUserViaRest(email);
+    } catch (err) {
+      error = err;
+    }
+
+    if (error) {
+      try {
+        const result = await withTimeout(
+          supabase.from('participants').select('*').eq('email', email),
+          5000,
+        );
+        data = result.data;
+        error = result.error;
+      } catch (err) {
+        error = err;
+      }
+    }
+
+    if (error) {
+      console.error('Failed to load user participants:', error);
+      return;
+    }
+
+    const ps = (data ?? []).map((row) => rowToParticipant(row as ParticipantRow));
+
+    setParticipants((prev) => {
+      const map = new Map(prev.map((p) => [p.id, p]));
+      for (const p of ps) map.set(p.id, p);
+      return Array.from(map.values());
+    });
+
+    setLoadedParticipantsForUsers((prev) => new Set([...prev, normalizedEmail]));
+  }, [loadedParticipantsForUsers]);
+
   const registerParticipant = useCallback(
     (eventId: string, name: string, email: string, role: Participant['role']): boolean => {
       const event = events.find((e) => e.id === eventId);
@@ -558,6 +617,7 @@ export function EventProvider({ children }: { children: ReactNode }) {
         bulkAbsentParticipants,
         isRegistered,
         getEventParticipants,
+        loadParticipantsForUser,
       }}
     >
       {children}

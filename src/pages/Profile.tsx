@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -16,6 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents } from '@/contexts/EventContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { getProfileEventGroups } from '@/lib/profileEvents';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -28,12 +29,16 @@ const roleLabels: Record<string, string> = {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
-  const { events, participants } = useEvents();
+  const { events, participants, loadParticipantsForUser } = useEvents();
   const { theme, toggleTheme } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(user?.name ?? '');
+
+  useEffect(() => {
+    if (user?.email) void loadParticipantsForUser(user.email);
+  }, [user?.email, loadParticipantsForUser]);
 
   if (!user) {
     return (
@@ -49,11 +54,11 @@ const Profile = () => {
     );
   }
 
-  const myRegistrations = participants.filter((p) => p.email === user.email);
-  const enrolledEventIds = myRegistrations.map((p) => p.eventId);
-  const enrolledEvents = events.filter((e) => enrolledEventIds.includes(e.id));
-  const upcomingEvents = enrolledEvents.filter((e) => e.status === 'upcoming' || e.status === 'ongoing');
-  const completedEvents = enrolledEvents.filter((e) => e.status === 'completed');
+  const { myRegistrations, enrolledEvents, upcomingEvents, completedEvents, presentCount } = getProfileEventGroups(
+    events,
+    participants,
+    user.email,
+  );
 
   const handleSaveName = () => {
     if (nameValue.trim() && nameValue.trim() !== user.name) {
@@ -140,7 +145,7 @@ const Profile = () => {
             </div>
             <div className="glass-card rounded-xl p-5 text-center">
               <CheckCircle2 className="h-6 w-6 text-success mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">{myRegistrations.filter((r) => r.attendance === 'present').length}</p>
+              <p className="text-2xl font-bold text-foreground">{presentCount}</p>
               <p className="text-sm text-muted-foreground">Presenças</p>
             </div>
             <div className="glass-card rounded-xl p-5 col-span-2 md:col-span-1 flex flex-col items-center justify-center">
