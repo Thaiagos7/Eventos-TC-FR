@@ -17,6 +17,7 @@ alter table public.notifications enable row level security;
 drop policy if exists "Users can read own notifications" on public.notifications;
 drop policy if exists "Authenticated users can create notifications" on public.notifications;
 drop policy if exists "Users can update own notifications" on public.notifications;
+drop policy if exists "Users can delete own notifications" on public.notifications;
 
 create policy "Users can read own notifications"
   on public.notifications
@@ -52,4 +53,15 @@ create policy "Users can update own notifications"
     )
   );
 
-grant select, insert, update on public.notifications to authenticated;
+create policy "Users can delete own notifications"
+  on public.notifications
+  for delete
+  using (
+    auth.role() = 'authenticated'
+    and (
+      user_id = auth.uid()::text
+      or lower(user_id) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    )
+  );
+
+grant select, insert, update, delete on public.notifications to authenticated;

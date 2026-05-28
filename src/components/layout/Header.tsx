@@ -17,7 +17,7 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, canManageEvents } = useAuth();
-  const { getUserNotifications, markAsRead, markAllAsRead, getUnreadCount } = useNotifications();
+  const { getUserNotifications, markAsRead, getUnreadCount } = useNotifications();
 
   const unreadCount = user ? getUnreadCount(user.email) + getUnreadCount(user.id) : 0;
   const userNotifications = user
@@ -93,22 +93,8 @@ export function Header() {
                   </PopoverTrigger>
                   <PopoverContent className="w-[22rem] p-0" align="end">
                     <div className="border-b border-foreground/8 px-4 py-3">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="text-center">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.12em] text-foreground">Notificações</h3>
-                        {unreadCount > 0 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-[11px] uppercase tracking-[0.08em]"
-                            onClick={() => {
-                              if (!user) return;
-                              markAllAsRead(user.email);
-                              markAllAsRead(user.id);
-                            }}
-                          >
-                            Marcar todas como lidas
-                          </Button>
-                        )}
                       </div>
                     </div>
                     <div className="max-h-72 overflow-y-auto">

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { pt } from 'date-fns/locale';
 const Notificacoes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getUserNotifications, markAsRead, markAllAsRead, getUnreadCount } = useNotifications();
+  const { getUserNotifications, markAsRead, markAllAsRead, clearNotifications, getUnreadCount } = useNotifications();
 
   if (!user) {
     return (
@@ -31,6 +31,13 @@ const Notificacoes = () => {
   );
   const unreadCount = getUnreadCount(user.email) + getUnreadCount(user.id);
 
+  const handleClearNotifications = () => {
+    const confirmed = window.confirm('Tem a certeza que pretende limpar todas as suas notificacoes?');
+    if (!confirmed) return;
+
+    clearNotifications([user.email, user.id]);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -45,11 +52,18 @@ const Notificacoes = () => {
                 {unreadCount > 0 ? `${unreadCount} não lida${unreadCount > 1 ? 's' : ''}` : 'Todas lidas'}
               </p>
             </div>
-            {unreadCount > 0 && (
-              <Button variant="outline" size="sm" className="gap-2"
-                onClick={() => { markAllAsRead(user.email); markAllAsRead(user.id); }}>
-                <CheckCheck className="h-4 w-4" /> Marcar todas como lidas
-              </Button>
+            {notifications.length > 0 && (
+              <div className="flex flex-wrap justify-end gap-2">
+                {unreadCount > 0 && (
+                  <Button variant="outline" size="sm" className="gap-2"
+                    onClick={() => { markAllAsRead(user.email); markAllAsRead(user.id); }}>
+                    <CheckCheck className="h-4 w-4" /> Marcar todas como lidas
+                  </Button>
+                )}
+                <Button variant="destructive" size="sm" className="gap-2" onClick={handleClearNotifications}>
+                  <Trash2 className="h-4 w-4" /> Limpar notificacoes
+                </Button>
+              </div>
             )}
           </div>
 

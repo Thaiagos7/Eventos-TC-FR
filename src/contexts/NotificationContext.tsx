@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  deleteUserNotifications,
   fetchNotifications,
   insertNotification,
   markNotificationAsRead,
@@ -21,6 +22,7 @@ interface NotificationContextType {
   addNotification: (n: NewNotification) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: (userId: string) => void;
+  clearNotifications: (userIds: string[]) => void;
   getUnreadCount: (userId: string) => number;
   getUserNotifications: (userId: string) => Notification[];
 }
@@ -88,6 +90,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const clearNotifications = useCallback((userIds: string[]) => {
+    const ids = new Set(userIds.filter(Boolean));
+    if (ids.size === 0) return;
+
+    setNotifications((prev) => prev.filter((n) => !ids.has(n.userId)));
+
+    void deleteUserNotifications(Array.from(ids)).catch((error) => {
+      console.error('Failed to clear notifications:', error);
+    });
+  }, []);
+
   const getUnreadCount = useCallback(
     (userId: string) => notifications.filter((n) => n.userId === userId && !n.read).length,
     [notifications]
@@ -99,7 +112,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, markAsRead, markAllAsRead, getUnreadCount, getUserNotifications }}>
+    <NotificationContext.Provider value={{ notifications, addNotification, markAsRead, markAllAsRead, clearNotifications, getUnreadCount, getUserNotifications }}>
       {children}
     </NotificationContext.Provider>
   );

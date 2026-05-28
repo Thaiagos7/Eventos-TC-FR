@@ -78,3 +78,15 @@ export async function markUserNotificationsAsRead(userId: string): Promise<void>
 
   if (error) throw error;
 }
+
+export async function deleteUserNotifications(userIds: string[]): Promise<void> {
+  const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
+  if (uniqueUserIds.length === 0) return;
+
+  const { error } = await supabase
+    .from('notifications')
+    .delete()
+    .in('user_id', uniqueUserIds);
+
+  if (error) throw error;
+}
