@@ -114,7 +114,7 @@ const Eventos = () => {
                 transition={{ duration: 0.24, delay: index * 0.03 }}
                 className={cn('group glass-card flex h-full flex-col rounded-[1.9rem] p-4 card-hover', (isCancelled || isCompleted) && 'opacity-70')}
               >
-                <div className="mb-4 rounded-[1.5rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] p-4 poster-grid-bg">
+                <div className="mb-4 rounded-[1.5rem] border border-foreground/10 bg-[hsl(var(--paper-strong)/0.55)] p-4 poster-grid-bg">
                   <div className="mb-4 flex flex-wrap gap-2">
                     <Badge variant={eventTypeColors[event.type]}>
                       {event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}
@@ -131,7 +131,7 @@ const Eventos = () => {
                       <img src={event.coverImage} alt="" className="h-40 w-full" />
                     </div>
                   ) : (
-                    <div className="flex min-h-[10.5rem] items-center justify-center rounded-[1.3rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] p-5 text-center">
+                    <div className="flex min-h-[10.5rem] items-center justify-center rounded-[1.3rem] border border-foreground/10 bg-[hsl(var(--paper-strong)/0.72)] p-5 text-center">
                       <h3 className="editorial-title text-3xl text-foreground">{event.title}</h3>
                     </div>
                   )}
@@ -143,7 +143,7 @@ const Eventos = () => {
                   </h3>
                   <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{event.description}</p>
 
-                  <div className="space-y-2.5 rounded-[1.35rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] p-4 text-sm shadow-sm">
+                  <div className="space-y-2.5 rounded-[1.35rem] border border-foreground/10 bg-[hsl(var(--paper-strong)/0.55)] p-4 text-sm shadow-sm">
                     <div className="flex items-center gap-2 text-foreground">
                       <Calendar className="h-4 w-4 text-primary" />
                       <span className="capitalize text-safe">

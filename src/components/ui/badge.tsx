@@ -17,6 +17,10 @@ const badgeVariants = cva(
         presentation: "border-sky-300/40 bg-sky-100 text-sky-800 dark:border-sky-300/18 dark:bg-sky-500/18 dark:text-sky-100",
         lecture: "border-emerald-300/40 bg-emerald-100 text-emerald-800 dark:border-emerald-300/18 dark:bg-emerald-500/18 dark:text-emerald-100",
         fair: "border-amber-300/40 bg-amber-100 text-amber-800 dark:border-amber-300/18 dark:bg-amber-500/18 dark:text-amber-100",
+        workshop: "border-blue-300/40 bg-blue-100 text-blue-800 dark:border-blue-300/18 dark:bg-blue-500/18 dark:text-blue-100",
+        exhibition: "border-fuchsia-300/40 bg-fuchsia-100 text-fuchsia-800 dark:border-fuchsia-300/18 dark:bg-fuchsia-500/18 dark:text-fuchsia-100",
+        sports: "border-lime-300/50 bg-lime-100 text-lime-800 dark:border-lime-300/18 dark:bg-lime-500/18 dark:text-lime-100",
+        otherCategory: "border-slate-300/50 bg-slate-100 text-slate-800 dark:border-slate-300/18 dark:bg-slate-500/18 dark:text-slate-100",
       },
     },
     defaultVariants: {

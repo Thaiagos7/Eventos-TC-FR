@@ -56,18 +56,18 @@ type EventTypeColor =
   | 'presentation'
   | 'lecture'
   | 'fair'
-  | 'default'
-  | 'secondary'
-  | 'success'
-  | 'outline';
+  | 'workshop'
+  | 'exhibition'
+  | 'sports'
+  | 'otherCategory';
 
 export const eventTypeColors = {
   theater: 'theater',
   presentation: 'presentation',
   lecture: 'lecture',
   fair: 'fair',
-  workshop: 'default',
-  exhibition: 'secondary',
-  sports: 'success',
-  other: 'outline',
+  workshop: 'workshop',
+  exhibition: 'exhibition',
+  sports: 'sports',
+  other: 'otherCategory',
 } satisfies Record<Event['type'], EventTypeColor>;
