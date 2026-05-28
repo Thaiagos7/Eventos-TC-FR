@@ -73,11 +73,11 @@ const Registar = () => {
               <aside className="relative hidden overflow-hidden rounded-[2.1rem] bg-primary p-8 text-primary-foreground lg:flex lg:flex-col lg:justify-between">
                 <div className="absolute inset-0 poster-grid-bg opacity-[0.18]" />
                 <div className="relative z-10">
-                  <div className="inline-flex items-center gap-3 rounded-full border border-white/14 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/78">
+                  <div className="inline-flex items-center gap-3 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground">
                     <img src={logo} alt="" aria-hidden="true" className="h-5 w-auto" />
                     Eventos TC
                   </div>
-                  <h2 className="editorial-title mt-6 max-w-sm text-[clamp(2.4rem,5vw,4.1rem)] text-white">
+                  <h2 className="editorial-title mt-6 max-w-sm text-[clamp(2.4rem,5vw,4.1rem)] text-primary-foreground">
                     Criar Conta
                   </h2>
                 </div>

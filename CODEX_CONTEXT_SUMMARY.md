@@ -1,6 +1,6 @@
 # Contexto completo para continuar o projeto Eventos TC noutra sessão do Codex
 
-Este resumo foi criado em 2026-05-27 para permitir continuar o trabalho noutra sessão do Codex sem perder contexto.
+Este resumo foi criado em 2026-05-27 e atualizado em 2026-05-28 para permitir continuar o trabalho noutra sessão do Codex sem perder contexto.
 
 ## Estado atual do Git
 
@@ -8,11 +8,14 @@ Este resumo foi criado em 2026-05-27 para permitir continuar o trabalho noutra s
 - Branch ativa: `main`
 - Repositório remoto: `https://github.com/Thaiagos7/Eventos-TC-FR.git`
 - Último commit feito e enviado para GitHub:
-  - `6fe415df Persist registrations and notifications`
+  - `f08530eb Refine event category visuals`
 - O `git status` ficou limpo depois do push.
 
 Commits recentes relevantes:
 
+- `f08530eb Refine event category visuals`
+- `0fc8c584 Add notification cleanup`
+- `2c7764a3 Add Codex context summary`
 - `6fe415df Persist registrations and notifications`
 - `5b91162f Add auth profile tests`
 - `7a6b0970 Add event mapper tests`
@@ -181,6 +184,86 @@ Ficheiros:
 - `src/lib/notificationStore.ts`
 - `src/lib/notificationStore.test.ts`
 
+### 7. Limpeza manual de notificações por utilizador
+
+Problema/dúvida:
+
+- A tabela `notifications` não reseta sozinha.
+- Se nada for feito, poderia crescer indefinidamente.
+- O utilizador pediu uma forma simples para cada perfil limpar as suas próprias notificações.
+- Também pediu para remover o botão “Marcar todas como lidas” do popup do sino no header, centralizar o título “Notificações” e manter essa ação apenas na página completa.
+
+Correção feita no commit `0fc8c584`:
+
+- `supabase/notifications.sql` ganhou policy de `delete` e `grant delete`.
+- `notificationRepository.ts` ganhou `deleteUserNotifications`.
+- `NotificationContext` ganhou `clearNotifications`.
+- Página `/notificacoes` ganhou botão “Limpar notificacoes”, com confirmação antes de apagar.
+- O popup do header ficou mais simples:
+  - Título “Notificações” centralizado.
+  - Sem “Marcar todas como lidas”.
+  - Mantém lista curta e link para ver todas.
+
+SQL adicional aplicado/necessário no Supabase:
+
+```sql
+drop policy if exists "Users can delete own notifications" on public.notifications;
+
+create policy "Users can delete own notifications"
+  on public.notifications
+  for delete
+  using (
+    auth.role() = 'authenticated'
+    and (
+      user_id = auth.uid()::text
+      or lower(user_id) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    )
+  );
+
+grant delete on public.notifications to authenticated;
+```
+
+Ficheiros:
+
+- `supabase/notifications.sql`
+- `src/lib/notificationRepository.ts`
+- `src/contexts/NotificationContext.tsx`
+- `src/pages/Notificacoes.tsx`
+- `src/components/layout/Header.tsx`
+
+### 8. Cores das categorias e grelha visual
+
+Problema:
+
+- Nas categorias dos eventos, algumas badges pareciam “inverter” a cor no modo escuro/claro.
+- Exemplo: categorias como `Workshop`, `Exposição`, `Torneio Desportivo` e `Outro` usavam variantes genéricas (`default`, `secondary`, `success`, `outline`), que também eram usadas para estados da UI.
+- Isso fazia uma categoria mudar visualmente como se fosse um estado, especialmente em dark mode.
+
+Correção feita no commit `f08530eb`:
+
+- `Badge` ganhou variantes próprias para categorias:
+  - `workshop`
+  - `exhibition`
+  - `sports`
+  - `otherCategory`
+- `eventTypeColors` passou a mapear cada categoria para uma variante própria.
+- As variantes genéricas ficaram reservadas para estados como “Aberto”, “Esgotado”, “Concluído”, etc.
+- Foi usada a pasta `C:\Users\thiag\Documents\Versão_Atual` como referência visual.
+- Da referência, foram trazidos apenas elementos visuais:
+  - grelha de fundo no site;
+  - ajustes de dark mode;
+  - textura/acabamento de cartões, painéis e navegação;
+  - pequenas transparências nos cartões de eventos.
+- Não foram copiados ficheiros inteiros nem lógica antiga, para não desfazer autenticação, Supabase, perfis, notificações ou inscrições.
+
+Ficheiros:
+
+- `src/components/ui/badge.tsx`
+- `src/data/mockData.ts`
+- `src/index.css`
+- `src/pages/Eventos.tsx`
+- `src/components/events/EventCard.tsx`
+
 ## Passo manual ainda necessário no Supabase
 
 O SQL da tabela de notificações já está no projeto, mas precisa ser aplicado manualmente no Supabase.
@@ -204,22 +287,29 @@ O SQL cria:
 - Policy para utilizador autenticado ler as suas notificações.
 - Policy para utilizador autenticado criar notificações.
 - Policy para utilizador atualizar/marcar como lidas as suas notificações.
+- Policy para utilizador apagar/limpar as suas próprias notificações.
 - Grants para `authenticated`.
 
 Observação:
 
 - Enquanto o SQL não for aplicado, a app ainda tenta funcionar com fallback local.
 - Depois de aplicado, notificações novas devem aparecer em qualquer browser/dispositivo quando o utilizador entra na mesma conta.
+- Se a limpeza de notificações não funcionar, verificar primeiro se a policy de `delete` e o `grant delete` já foram aplicados no Supabase.
 
 ## Validações feitas
 
-Antes do commit/push `6fe415df`, foram corridos:
+Antes dos commits principais recentes, foram corridos:
 
 - `npm run lint` passou.
 - `npm run test` passou.
   - 7 test files.
   - 16 tests.
 - `npm run build` passou.
+
+Também passaram depois de:
+
+- `0fc8c584 Add notification cleanup`
+- `f08530eb Refine event category visuals`
 
 ## Tecnologias usadas no projeto
 
@@ -268,6 +358,8 @@ Se precisares mandar ficheiros a outro Codex, os mais importantes são:
 - `src/lib/participantCounts.test.ts`
 - `src/pages/EventoDetalhe.tsx`
 - `src/pages/Eventos.tsx`
+- `src/components/events/EventCard.tsx`
+- `src/components/ui/badge.tsx`
 - `src/pages/Dashboard.tsx`
 - `src/pages/EventoParticipantes.tsx`
 - `src/pages/Profile.tsx`
@@ -291,14 +383,15 @@ Se precisares mandar ficheiros a outro Codex, os mais importantes são:
 - `vite.config.ts`
 - `vitest.config.ts`
 - `vercel.json`
+- `src/index.css`
 - `.env.example`
 - `.env` não deve ser enviado publicamente, mas pode ser necessário verificar localmente.
 
 ## Melhorias pendentes / próximas prioridades
 
-### 1. Aplicar e testar tabela de notificações no Supabase
+### 1. Testar tabela de notificações no Supabase
 
-Depois de correr `supabase/notifications.sql`:
+Depois de correr `supabase/notifications.sql` completo:
 
 - Criar uma notificação usando a app.
 - Fazer logout.
@@ -307,6 +400,8 @@ Depois de correr `supabase/notifications.sql`:
 - Abrir noutro browser/dispositivo e entrar na mesma conta.
 - Ver se a notificação aparece.
 - Marcar como lida e verificar se fica lida depois de refresh.
+- Clicar em “Limpar notificacoes” na página `/notificacoes`.
+- Confirmar que apaga na app e na tabela `public.notifications`.
 
 ### 2. Melhorar loading visual de `/eventos` e `/dashboard`
 
@@ -322,13 +417,17 @@ Melhoria futura:
 - Evitar mostrar “vazio” antes da primeira resposta da base.
 - Diferenciar “a carregar” de “não há dados”.
 
-### 3. Diferenças de cor no modo claro/escuro
+### 3. Revisão geral de contrastes no modo claro/escuro
 
 Problema relatado:
 
 - Há textos que provavelmente não contrastam bem no modo claro/escuro.
 
-Ainda não foi atacado.
+Estado atual:
+
+- As categorias dos eventos já foram corrigidas no commit `f08530eb`.
+- O fundo/grelha e dark mode global foram aproximados da pasta `Versão_Atual`.
+- Ainda pode valer uma revisão geral em páginas específicas.
 
 Como resolver:
 
@@ -382,4 +481,4 @@ Já existem testes unitários, mas ainda faz sentido validar manualmente:
 
 ## Resumo curtíssimo para colar noutro chat
 
-Projeto Eventos TC em React/Vite/TypeScript/Supabase. Branch `main`, remoto `Thaiagos7/Eventos-TC-FR`. Último commit/push: `6fe415df Persist registrations and notifications`. Já foram corrigidos OAuth Google, login/logout, roles admin/prof/aluno, carregamento de eventos, permissões, perfil, contagem de inscritos e notificações. A tabela `profiles` já foi ajustada no Supabase. Foi criado `supabase/notifications.sql` para persistir notificações no Supabase; ainda precisa ser aplicado manualmente no SQL Editor. App agora carrega inscrições do utilizador no perfil via `loadParticipantsForUser`, usa `profileEvents.ts`, corrige contagem com `participantCounts.ts`, e usa `notificationRepository.ts`/`NotificationContext.tsx` para notificações no Supabase com fallback local. Validações passaram: lint, 16 testes, build. Próximos passos: aplicar `notifications.sql`, testar notificações multi-dispositivo, melhorar loading/skeleton em `/eventos` e `/dashboard`, corrigir contrastes modo claro/escuro e futuramente endurecer RLS/segurança.
+Projeto Eventos TC em React/Vite/TypeScript/Supabase. Branch `main`, remoto `Thaiagos7/Eventos-TC-FR`. Último commit/push: `f08530eb Refine event category visuals`. Já foram corrigidos OAuth Google, login/logout, roles admin/prof/aluno, carregamento de eventos, permissões, perfil, contagem de inscritos, notificações persistentes no Supabase, limpeza manual de notificações e cores das categorias. A tabela `profiles` já foi ajustada no Supabase. Foi criado/atualizado `supabase/notifications.sql` para persistir notificações e permitir que cada utilizador limpe as próprias notificações. App carrega inscrições do utilizador no perfil via `loadParticipantsForUser`, usa `profileEvents.ts`, corrige contagem com `participantCounts.ts`, e usa `notificationRepository.ts`/`NotificationContext.tsx` para notificações no Supabase com fallback local. Visual foi aproximado da pasta `C:\Users\thiag\Documents\Versão_Atual`, trazendo grelha de fundo, ajustes de dark mode e badges próprias para categorias. Validações passaram: lint, 16 testes, build. Próximos passos: testar notificações multi-dispositivo e limpeza na tabela, melhorar loading/skeleton em `/eventos` e `/dashboard`, fazer revisão geral de contraste claro/escuro e futuramente endurecer RLS/segurança.

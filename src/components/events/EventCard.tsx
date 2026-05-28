@@ -76,7 +76,7 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
               <span
                 className={cn(
                   'font-semibold uppercase tracking-[0.08em]',
-                  isFull ? 'text-destructive' : isAlmostFull ? 'text-secondary-foreground' : 'text-success',
+                  isFull ? 'text-destructive' : isAlmostFull ? 'text-secondary-foreground dark:text-secondary' : 'text-success',
                 )}
               >
                 {isFull ? 'Esgotado' : `${spotsLeft} vagas`}

@@ -8,12 +8,35 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEvents } from '@/contexts/EventContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { Button } from '@/components/ui/button';
+import { fetchAdminNotificationRecipients } from '@/lib/notificationRepository';
 
 const EventoNovo = () => {
   const navigate = useNavigate();
   const { user, canManageEvents, isAdmin, isProfessor } = useAuth();
   const { addEvent } = useEvents();
   const { addNotification } = useNotifications();
+
+  const notifyAdminsAboutPendingEvent = (eventTitle: string) => {
+    void (async () => {
+      let recipients: string[] = [];
+
+      try {
+        recipients = await fetchAdminNotificationRecipients();
+      } catch (error) {
+        console.error('Failed to load admin notification recipients:', error);
+      }
+
+      const uniqueRecipients = recipients.length > 0 ? recipients : ['admin@eventostc.test'];
+      uniqueRecipients.forEach((recipient) => {
+        addNotification({
+          userId: recipient,
+          title: 'Novo evento pendente',
+          message: `${user?.name} submeteu "${eventTitle}" para aprovação.`,
+          type: 'event_update',
+        });
+      });
+    })();
+  };
 
   if (!canManageEvents) {
     return (
@@ -31,7 +54,7 @@ const EventoNovo = () => {
 
   const handleSubmit = (values: EventFormValues, extras: EventFormExtras) => {
     const approved = isAdmin;
-    const evt = addEvent({
+    addEvent({
       title: values.title,
       description: values.description,
       type: values.type,
@@ -60,13 +83,7 @@ const EventoNovo = () => {
       toast.success('Evento criado com sucesso!', { description: `"${values.title}" foi adicionado.` });
     } else {
       toast.success('Evento enviado para aprovação!', { description: 'O administrador irá analisar o seu evento.' });
-      addNotification({
-        userId: 'u-admin',
-        title: 'Novo evento pendente',
-        message: `${user?.name} submeteu "${values.title}" para aprovação.`,
-        type: 'event_update',
-        eventId: evt.id,
-      });
+      notifyAdminsAboutPendingEvent(values.title);
     }
     navigate('/eventos');
   };

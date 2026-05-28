@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -175,17 +175,13 @@ const EventoDetalhe = () => {
                   }
                 : undefined
             }
+            onComplete={
+              (isAdmin || (isProfessor && event.organizerId === user?.id)) && event.approved && event.status === 'upcoming'
+                ? handleComplete
+                : undefined
+            }
             isRegistered={userIsRegistered}
           />
-
-          {/* Complete event + Certificates */}
-          {(isAdmin || (isProfessor && event.organizerId === user?.id)) && event.approved && event.status === 'upcoming' && (
-            <div className="mt-4 flex gap-2">
-              <Button variant="outline" className="gap-2" onClick={handleComplete}>
-                <CheckCircle2 className="h-4 w-4" /> Marcar como Concluído
-              </Button>
-            </div>
-          )}
 
           {(isAdmin || (isProfessor && event.organizerId === user?.id)) && event.status === 'completed' && (
             <div className="mt-4 flex gap-2">

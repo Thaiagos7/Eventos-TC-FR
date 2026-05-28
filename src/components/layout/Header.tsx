@@ -50,10 +50,10 @@ export function Header() {
         <div className="glass-nav rounded-[1.9rem] p-3 md:p-3.5">
           <div className="relative flex items-center gap-3">
             <Link to="/" className="shrink-0 rounded-[1.45rem] bg-primary p-2.5 text-primary-foreground shadow-[0_22px_36px_-24px_hsl(var(--paper-shadow)/0.95)] transition-transform duration-150 hover:-translate-y-0.5">
-              <div className="flex items-center gap-3 rounded-[1.15rem] border border-white/14 bg-white/10 px-3 py-2.5">
+              <div className="flex items-center gap-3 rounded-[1.15rem] border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-2.5">
                 <img src={logo} alt="Eventos TC" className="h-11 w-11 shrink-0 object-contain" />
                 <div className="hidden sm:block leading-none text-left">
-                  <span className="block font-display text-lg font-black uppercase tracking-[-0.04em] text-white">
+                  <span className="block font-display text-lg font-black uppercase tracking-[-0.04em] text-primary-foreground">
                     Eventos TC
                   </span>
                 </div>

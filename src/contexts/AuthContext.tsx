@@ -25,6 +25,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: { name?: string; avatar?: string }) => Promise<void>;
+  updateCredentials: (updates: { email?: string; password?: string }) => Promise<{ emailChanged: boolean }>;
 
   isAdmin: boolean;
   isProfessor: boolean;
@@ -263,6 +264,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   }, []);
 
+  const updateCredentials = useCallback(async (updates: { email?: string; password?: string }) => {
+    const payload: { email?: string; password?: string } = {};
+    if (updates.email) payload.email = updates.email;
+    if (updates.password) payload.password = updates.password;
+    if (!payload.email && !payload.password) return { emailChanged: false };
+
+    const { data, error } = await supabase.auth.updateUser(payload);
+    if (error) throw error;
+
+    const updatedUser = data.user;
+    const nextEmail = updatedUser?.email ?? "";
+    const emailChanged = Boolean(payload.email && nextEmail.toLowerCase() === payload.email.toLowerCase());
+
+    if (emailChanged && updatedUser) {
+      await supabase.from("profiles").update({ email: nextEmail }).eq("id", updatedUser.id);
+      setUser((prev) => (prev ? { ...prev, email: nextEmail } : prev));
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      window.localStorage.setItem("eventostc-auth", JSON.stringify(sessionData.session));
+      setSession(sessionData.session);
+    }
+
+    return { emailChanged };
+  }, []);
+
   const isAdmin = user?.role === "admin";
   const isProfessor = user?.role === "professor";
   const isAluno = user?.role === "aluno";
@@ -279,12 +307,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       updateProfile,
+      updateCredentials,
       isAdmin,
       isProfessor,
       isAluno,
       canManageEvents,
     }),
-    [user, session, loading, login, loginWithGoogle, refreshSession, register, logout, updateProfile, isAdmin, isProfessor, isAluno, canManageEvents]
+    [user, session, loading, login, loginWithGoogle, refreshSession, register, logout, updateProfile, updateCredentials, isAdmin, isProfessor, isAluno, canManageEvents]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

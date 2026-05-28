@@ -13,10 +13,11 @@ interface EventDetailCardProps {
   onEdit?: () => void;
   onCancel?: () => void;
   onApprove?: () => void;
+  onComplete?: () => void;
   isRegistered?: boolean;
 }
 
-export function EventDetailCard({ event, onRegister, onEdit, onCancel, onApprove, isRegistered }: EventDetailCardProps) {
+export function EventDetailCard({ event, onRegister, onEdit, onCancel, onApprove, onComplete, isRegistered }: EventDetailCardProps) {
   const isFull = event.registrationType !== 'open' && event.currentParticipants >= event.maxParticipants;
   const occupancyPercent = event.registrationType !== 'open' ? Math.round((event.currentParticipants / event.maxParticipants) * 100) : 0;
 
@@ -51,10 +52,15 @@ export function EventDetailCard({ event, onRegister, onEdit, onCancel, onApprove
             {event.title}
           </h1>
         </div>
-        {(onEdit || onCancel || onApprove) && (
+        {(onEdit || onCancel || onApprove || onComplete) && (
           <div className="flex flex-wrap gap-2">
             {onEdit && (
               <Button variant="outline" onClick={onEdit}>Editar</Button>
+            )}
+            {onComplete && event.approved && event.status === 'upcoming' && (
+              <Button variant="success" className="gap-2" onClick={onComplete}>
+                <CheckCircle2 className="h-4 w-4" /> Marcar como Concluído
+              </Button>
             )}
             {onApprove && (
               <Button className="gap-2" onClick={onApprove}>

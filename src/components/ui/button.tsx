@@ -21,7 +21,7 @@ const buttonVariants = cva(
           "border-transparent bg-transparent text-foreground/82 hover:bg-foreground/[0.05] hover:text-foreground",
         link: "border-transparent p-0 text-primary underline-offset-4 hover:underline",
         hero:
-          "border-foreground/10 bg-foreground text-white shadow-[0_18px_32px_-22px_hsl(var(--paper-shadow)/0.9)] hover:-translate-y-0.5 hover:bg-foreground/96",
+          "border-foreground/10 bg-foreground text-background shadow-[0_18px_32px_-22px_hsl(var(--paper-shadow)/0.9)] hover:-translate-y-0.5 hover:bg-foreground/96",
         accent:
           "border-secondary/35 bg-secondary text-secondary-foreground shadow-[0_16px_28px_-22px_hsl(var(--paper-shadow)/0.8)] hover:-translate-y-0.5 hover:brightness-[1.01]",
         success:

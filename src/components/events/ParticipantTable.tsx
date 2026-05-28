@@ -25,9 +25,9 @@ const attendanceLabels: Record<Participant['attendance'], string> = {
 };
 
 const attendanceIcons: Record<Participant['attendance'], React.ReactNode> = {
-  present: <CheckCircle2 className="h-4 w-4 text-white" />,
-  absent: <XCircle className="h-4 w-4 text-white" />,
-  pending: <Clock className="h-4 w-4 text-white" />,
+  present: <CheckCircle2 className="h-4 w-4" />,
+  absent: <XCircle className="h-4 w-4" />,
+  pending: <Clock className="h-4 w-4" />,
 };
 
 function getInitials(name: string) {
@@ -153,7 +153,7 @@ export function ParticipantTable({ participants, onCheckIn, onUncheckIn, onMarkA
                   <td className="py-3 px-5">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                           {getInitials(participant.name)}
                         </AvatarFallback>
                       </Avatar>

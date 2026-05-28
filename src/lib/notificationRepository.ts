@@ -90,3 +90,20 @@ export async function deleteUserNotifications(userIds: string[]): Promise<void> 
 
   if (error) throw error;
 }
+
+export async function fetchAdminNotificationRecipients(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email')
+    .eq('role', 'admin');
+
+  if (error) throw error;
+
+  return Array.from(
+    new Set(
+      (data ?? [])
+        .map((profile) => profile.email || profile.id)
+        .filter((recipient): recipient is string => Boolean(recipient)),
+    ),
+  );
+}

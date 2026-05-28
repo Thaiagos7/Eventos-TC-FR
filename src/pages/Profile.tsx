@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { User, Mail, Shield, Calendar, CheckCircle2, Camera, Pencil, Sun, Moon } from 'lucide-react';
+import { Mail, Shield, Calendar, CheckCircle2, Camera, Pencil, Sun, Moon, KeyRound } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -28,17 +28,25 @@ const roleLabels: Record<string, string> = {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, updateCredentials } = useAuth();
   const { events, participants, loadParticipantsForUser } = useEvents();
   const { theme, toggleTheme } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(user?.name ?? '');
+  const [credentialEmail, setCredentialEmail] = useState(user?.email ?? '');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updatingCredentials, setUpdatingCredentials] = useState(false);
 
   useEffect(() => {
     if (user?.email) void loadParticipantsForUser(user.email);
   }, [user?.email, loadParticipantsForUser]);
+
+  useEffect(() => {
+    setCredentialEmail(user?.email ?? '');
+  }, [user?.email]);
 
   if (!user) {
     return (
@@ -66,6 +74,52 @@ const Profile = () => {
       toast.success('Nome atualizado com sucesso!');
     }
     setEditingName(false);
+  };
+
+  const handleSaveCredentials = async () => {
+    if (!user || updatingCredentials) return;
+
+    const nextEmail = credentialEmail.trim();
+    const emailChanged = Boolean(nextEmail && nextEmail.toLowerCase() !== user.email.toLowerCase());
+    const password = newPassword.trim();
+
+    if (!emailChanged && !password) {
+      toast.info('Altere o email ou indique uma nova palavra-passe.');
+      return;
+    }
+
+    if (password && password.length < 6) {
+      toast.error('A nova palavra-passe deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (password && password !== confirmPassword) {
+      toast.error('As palavras-passe não coincidem.');
+      return;
+    }
+
+    try {
+      setUpdatingCredentials(true);
+      const result = await updateCredentials({
+        email: emailChanged ? nextEmail : undefined,
+        password: password || undefined,
+      });
+
+      setNewPassword('');
+      setConfirmPassword('');
+
+      if (emailChanged && !result.emailChanged) {
+        toast.info('Confirme o novo email para concluir a alteração.');
+      } else {
+        toast.success('Credenciais atualizadas com sucesso!');
+      }
+    } catch (err) {
+      toast.error('Não foi possível atualizar as credenciais.', {
+        description: err instanceof Error ? err.message : 'Tente novamente.',
+      });
+    } finally {
+      setUpdatingCredentials(false);
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +156,7 @@ const Profile = () => {
               <div className="relative group">
                 <Avatar className="h-24 w-24 text-2xl">
                   {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
-                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">{initials}</AvatarFallback>
                 </Avatar>
                 <button onClick={() => fileInputRef.current?.click()}
                   className="absolute inset-0 flex items-center justify-center bg-foreground/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
@@ -157,6 +211,59 @@ const Profile = () => {
               <Label htmlFor="theme-toggle" className="block text-sm text-muted-foreground text-center mt-2">
                 {theme === 'dark' ? 'Modo Escuro' : 'Modo Claro'}
               </Label>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-xl p-6 md:p-8 mb-8">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--paper-strong))] text-foreground shadow-sm">
+                <KeyRound className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold text-foreground">Credenciais</h2>
+                <p className="text-sm text-muted-foreground">Atualize o email de acesso ou defina uma nova palavra-passe.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="credential-email">Email</Label>
+                <Input
+                  id="credential-email"
+                  type="email"
+                  value={credentialEmail}
+                  onChange={(e) => setCredentialEmail(e.target.value)}
+                  disabled={updatingCredentials}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova palavra-passe</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={updatingCredentials}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar palavra-passe</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={updatingCredentials}
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <Button className="gap-2" onClick={handleSaveCredentials} disabled={updatingCredentials}>
+                <KeyRound className="h-4 w-4" />
+                {updatingCredentials ? 'A guardar...' : 'Guardar credenciais'}
+              </Button>
             </div>
           </div>
 
