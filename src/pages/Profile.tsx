@@ -223,58 +223,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-xl p-6 md:p-8 mb-8">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[hsl(var(--paper-strong))] text-foreground shadow-sm">
-                <KeyRound className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="font-display text-xl font-bold text-foreground">Credenciais</h2>
-                <p className="text-sm text-muted-foreground">Atualize o email de acesso ou defina uma nova palavra-passe.</p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="credential-email">Email</Label>
-                <Input
-                  id="credential-email"
-                  type="email"
-                  value={credentialEmail}
-                  onChange={(e) => setCredentialEmail(e.target.value)}
-                  disabled={updatingCredentials}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nova palavra-passe</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Mínimo 6 caracteres"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={updatingCredentials}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar palavra-passe</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={updatingCredentials}
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <Button className="gap-2" onClick={handleSaveCredentials} disabled={updatingCredentials}>
-                <KeyRound className="h-4 w-4" />
-                {updatingCredentials ? 'A guardar...' : 'Guardar credenciais'}
-              </Button>
-            </div>
-          </div>
+          
 
           {/* Events tabs */}
           <Tabs defaultValue="enrolled" className="space-y-4">
