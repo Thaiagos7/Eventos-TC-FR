@@ -159,14 +159,16 @@ export function Header() {
             </div>
 
             <div className="ml-auto flex items-center gap-2 md:hidden">
-              {user && unreadCount > 0 && (
+              {user && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="icon" className="relative h-10 w-10">
                       <Bell className="h-5 w-5" />
-                      <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground shadow-sm">
-                        {unreadCount}
-                      </span>
+                      {unreadCount > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground shadow-sm">
+                          {unreadCount}
+                        </span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-0" align="end">
@@ -177,14 +179,28 @@ export function Header() {
                         userNotifications.slice(0, 5).map((n) => (
                           <div
                             key={n.id}
-                            className="border-b border-foreground/8 px-4 py-3 last:border-b-0"
-                            onClick={() => markAsRead(n.id)}
+                            className={`cursor-pointer border-b border-foreground/8 px-4 py-3 transition-colors last:border-b-0 hover:bg-primary/6 ${
+                              !n.read ? 'bg-primary/6' : ''
+                            }`}
+                            onClick={() => {
+                              markAsRead(n.id);
+                              if (n.type === 'event_update' && n.title?.includes('pendente')) {
+                                navigate('/dashboard/pendentes');
+                              } else if (n.eventId) {
+                                navigate(`/eventos/${n.eventId}`);
+                              }
+                            }}
                           >
                             <p className="text-sm font-semibold">{n.title}</p>
                             <p className="mt-1 text-xs text-muted-foreground">{n.message}</p>
                           </div>
                         ))
                       )}
+                    </div>
+                    <div className="border-t border-foreground/8 p-2">
+                      <Button variant="ghost" size="sm" className="w-full text-[11px] uppercase tracking-[0.08em]" onClick={() => navigate('/notificacoes')}>
+                        Ver todas
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>

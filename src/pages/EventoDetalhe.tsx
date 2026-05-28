@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -18,7 +18,7 @@ const EventoDetalhe = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, canManageEvents, isAdmin, isProfessor } = useAuth();
-  const { events, updateEvent, registerParticipant, unregisterParticipant, isRegistered, toggleEventStatus, completeEvent, getEventParticipants, incrementViews, approveEvent } = useEvents();
+  const { events, updateEvent, removeEvent, registerParticipant, unregisterParticipant, isRegistered, toggleEventStatus, completeEvent, getEventParticipants, incrementViews, approveEvent } = useEvents();
   const { addNotification } = useNotifications();
   const [galleryIndex, setGalleryIndex] = useState(0);
 
@@ -51,6 +51,7 @@ const EventoDetalhe = () => {
   const gallery = event.galleryImages || [];
   const isOpenEvent = event.registrationType === 'open';
   const isCompleted = event.status === 'completed';
+  const canDeleteEvent = isAdmin && (event.status === 'cancelled' || Boolean(event.rejectionReason));
 
   const handleRegister = () => {
     if (!user) { toast.error('Precisa de fazer login para se inscrever.'); navigate('/login'); return; }
@@ -95,6 +96,15 @@ const EventoDetalhe = () => {
   const handleComplete = () => {
     completeEvent(event.id);
     toast.success('Evento marcado como concluído!');
+  };
+
+  const handleDeleteEvent = () => {
+    const confirmed = window.confirm(`Tem a certeza que pretende eliminar definitivamente o evento "${event.title}"?`);
+    if (!confirmed) return;
+
+    removeEvent(event.id);
+    toast.success('Evento eliminado com sucesso.');
+    navigate('/eventos');
   };
 
   const handleGenerateCertificate = (participantName: string) => {
@@ -182,6 +192,14 @@ const EventoDetalhe = () => {
             }
             isRegistered={userIsRegistered}
           />
+
+          {canDeleteEvent && (
+            <div className="mt-4 flex justify-end">
+              <Button variant="destructive" className="gap-2" onClick={handleDeleteEvent}>
+                <Trash2 className="h-4 w-4" /> Excluir evento
+              </Button>
+            </div>
+          )}
 
           {(isAdmin || (isProfessor && event.organizerId === user?.id)) && event.status === 'completed' && (
             <div className="mt-4 flex gap-2">

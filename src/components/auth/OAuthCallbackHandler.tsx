@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-function hasOAuthHash(): boolean {
+function hasOAuthCallbackParams(): boolean {
   const hash = window.location.hash;
-  return hash.includes("access_token") || hash.includes("error=");
+  const search = window.location.search;
+  return hash.includes("access_token") || hash.includes("error=") || search.includes("error=");
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
@@ -46,28 +47,37 @@ function persistOAuthSession(hashParams: URLSearchParams): boolean {
   return true;
 }
 
-/** Após OAuth (Google), limpa o hash da URL e envia o utilizador para /eventos. */
+/** Após OAuth (Google), limpa tokens/erros da URL e envia o utilizador para o destino certo. */
 export function OAuthCallbackHandler() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!hasOAuthHash()) return;
+    if (!hasOAuthCallbackParams()) return;
 
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const error = hashParams.get("error_description") ?? hashParams.get("error");
+    const queryParams = new URLSearchParams(window.location.search);
+    const error =
+      hashParams.get("error_description") ??
+      hashParams.get("error") ??
+      queryParams.get("error_description") ??
+      queryParams.get("error");
+
     if (error) {
-      window.history.replaceState(null, "", window.location.pathname);
-      navigate("/login", { replace: true, state: { oauthError: error } });
+      window.history.replaceState(null, "", window.location.pathname || "/");
+      navigate("/login", {
+        replace: true,
+        state: { oauthError: "A sessão de login expirou. Tente entrar novamente." },
+      });
       return;
     }
 
-    const path = window.location.pathname + window.location.search;
+    const cleanPath = window.location.pathname || "/eventos";
     const persisted = persistOAuthSession(hashParams);
 
-    window.history.replaceState(null, "", path);
+    window.history.replaceState(null, "", cleanPath);
 
     if (persisted) {
-      window.location.replace(path || "/eventos");
+      window.location.replace(cleanPath || "/eventos");
       return;
     }
 

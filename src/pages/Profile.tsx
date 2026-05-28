@@ -28,7 +28,7 @@ const roleLabels: Record<string, string> = {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, updateProfile, updateCredentials } = useAuth();
+  const { user, session, updateProfile, updateCredentials } = useAuth();
   const { events, participants, loadParticipantsForUser } = useEvents();
   const { theme, toggleTheme } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +78,11 @@ const Profile = () => {
 
   const handleSaveCredentials = async () => {
     if (!user || updatingCredentials) return;
+
+    if (usesGoogleLogin) {
+      toast.info('Esta conta usa login Google. As credenciais são geridas pela Google.');
+      return;
+    }
 
     const nextEmail = credentialEmail.trim();
     const emailChanged = Boolean(nextEmail && nextEmail.toLowerCase() !== user.email.toLowerCase());
@@ -137,6 +142,10 @@ const Profile = () => {
     };
     reader.readAsDataURL(file);
   };
+
+  const provider = session?.user?.app_metadata?.provider as string | undefined;
+  const identityProviders = session?.user?.identities?.map((identity) => identity.provider) ?? [];
+  const usesGoogleLogin = provider === 'google' || identityProviders.includes('google');
 
   const initials = user.name
     .split(' ')

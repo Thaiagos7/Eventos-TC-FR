@@ -4,7 +4,7 @@ import footerLogo from '@/assets/footer-logo.png';
 
 export function Footer() {
   return (
-    <footer className="relative mt-14 overflow-hidden border-t border-foreground/10 bg-[hsl(223_42%_16%)] text-[hsl(45_28%_90%)] dark:bg-[hsl(223_22%_12%)] dark:text-foreground">
+    <footer className="relative mt-14 overflow-hidden border-t border-foreground/10 bg-[#2863eb] text-white dark:bg-[#2863eb] dark:text-white">
       <div className="absolute inset-0 poster-grid-bg opacity-[0.12] dark:opacity-[0.05]" />
       <div className="container relative py-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -22,7 +22,7 @@ export function Footer() {
             </Link>
           </div>
 
-          <div className="flex flex-col gap-3 text-sm text-white/82 dark:text-foreground/78 md:items-end">
+          <div className="flex flex-col gap-3 text-sm text-white/90 md:items-end">
             <a href="tel:+351289889570" className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 transition-colors hover:bg-white/12 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]">
               <Phone className="h-4 w-4" />
               289-889-570
@@ -38,7 +38,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-white/10 pt-4 text-xs uppercase tracking-[0.12em] text-white/56 dark:text-foreground/52">
+        <div className="mt-8 border-t border-white/10 pt-4 text-xs uppercase tracking-[0.12em] text-white/56 dark:text-white/60">
           Copyright © {new Date().getFullYear()}. Agrupamento de Escolas Tomás Cabreira, em Faro.
         </div>
       </div>
