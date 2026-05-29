@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, RotateCcw, Trash2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { ArrowLeft, Users, ChevronLeft, ChevronRight, Award, RotateCcw, Trash2, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { EventDetailCard } from '@/components/events/EventDetailCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvents } from '@/contexts/EventContext';
@@ -52,6 +54,10 @@ const EventoDetalhe = () => {
   const isOpenEvent = event.registrationType === 'open';
   const isCompleted = event.status === 'completed';
   const canDeleteEvent = isAdmin && (event.status === 'cancelled' || Boolean(event.rejectionReason));
+  const eventPublicUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/eventos/${event.id}`
+      : `/eventos/${event.id}`;
 
   const handleRegister = () => {
     if (!user) { toast.error('Precisa de fazer login para se inscrever.'); navigate('/login'); return; }
@@ -192,6 +198,47 @@ const EventoDetalhe = () => {
             }
             isRegistered={userIsRegistered}
           />
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="mt-4 glass-card card-hover flex w-full items-center justify-between gap-4 rounded-[1.6rem] p-5 text-left transition-colors hover:border-primary/25 sm:w-auto sm:min-w-[18rem]"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-[1.15rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] text-foreground shadow-sm">
+                    <QrCode className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block font-display text-base font-bold text-foreground">QR Code</span>
+                    <span className="mt-0.5 block text-sm text-muted-foreground">Link publico do evento</span>
+                  </span>
+                </span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>QR Code</DialogTitle>
+                <DialogDescription>
+                  Link publico para a pagina deste evento.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center gap-4">
+                <div className="rounded-[1.35rem] border border-foreground/10 bg-white p-4 shadow-sm">
+                  <QRCodeSVG
+                    value={eventPublicUrl}
+                    size={216}
+                    level="M"
+                    marginSize={4}
+                    title={`QR Code para ${event.title}`}
+                  />
+                </div>
+                <p className="w-full rounded-[1.1rem] border border-foreground/10 bg-[hsl(var(--paper-strong))] px-4 py-3 text-center text-sm text-foreground text-safe">
+                  {eventPublicUrl}
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {canDeleteEvent && (
             <div className="mt-4 flex justify-end">
