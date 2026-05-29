@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import escolaBg from '@/assets/escola-bg.jpg';
+import escolaBg2 from '@/assets/escola-bg2.jpeg';
+import escolaBg3 from '@/assets/escola-bg3.jpeg';
 import logo from '@/assets/logo.png';
 
 const transition = { duration: 0.26, ease: [0.22, 1, 0.36, 1] as const };
@@ -67,7 +68,11 @@ export function HeroSection() {
                 transition={{ ...transition, delay: 0.08 }}
                 className="paper-frame absolute left-0 top-4 w-[13rem] -rotate-6 md:w-[15rem] lg:left-4 lg:top-10"
               >
-                <img src={escolaBg} alt="Alunos a participar numa atividade escolar" className="h-36 md:h-40 lg:h-44 object-[30%_50%]" />
+                <img
+                  src={escolaBg2}
+                  alt="Alunos a participar numa atividade escolar"
+                  className="h-40 w-full object-cover object-[30%_50%] md:h-44 lg:h-48"
+                />
               </motion.div>
 
               <motion.div
@@ -76,7 +81,11 @@ export function HeroSection() {
                 transition={{ ...transition, delay: 0.052 }}
                 className="paper-frame absolute bottom-2 right-0 w-[12rem] rotate-[5deg] md:w-[15.5rem] lg:bottom-6 lg:right-4"
               >
-                <img src={escolaBg} alt="Vista da escola" className="h-32 md:h-40 lg:h-44 object-[65%_50%]" />
+                <img
+                  src={escolaBg3}
+                  alt="Vista da escola"
+                  className="h-32 w-full object-cover object-[65%_50%] md:h-40 lg:h-44"
+                />
               </motion.div>
 
               <div className="poster-sticker absolute left-[52%] top-[38%] h-20 w-20 -translate-x-1/2 -translate-y-1/2 p-4 md:h-24 md:w-24 lg:left-[54%] lg:top-[44%]">
