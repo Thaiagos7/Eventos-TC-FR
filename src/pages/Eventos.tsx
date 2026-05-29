@@ -119,11 +119,19 @@ const Eventos = () => {
                     <Badge variant={eventTypeColors[event.type]}>
                       {event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}
                     </Badge>
-                    {isCompleted && <Badge variant="secondary">Concluído</Badge>}
-                    {isCancelled && <Badge variant="destructive">Encerrado</Badge>}
-                    {isFull && !isCancelled && !isCompleted && <Badge variant="destructive">Esgotado</Badge>}
-                    {isAlmostFull && !isCancelled && !isCompleted && <Badge variant="secondary">Últimas vagas</Badge>}
-                    {isOpen && !isCancelled && !isCompleted && <Badge variant="success">Aberto</Badge>}
+                    {isCompleted ? (
+                      <Badge variant="secondary">Concluído</Badge>
+                    ) : isCancelled ? (
+                      <Badge variant="destructive">Encerrado</Badge>
+                    ) : isFull ? (
+                      <Badge variant="destructive">Esgotado</Badge>
+                    ) : (
+                      <Badge variant="success">Aberto</Badge>
+                    )}
+
+                    {isAlmostFull && !isFull && !isCancelled && !isCompleted && (
+                      <Badge variant="secondary">Últimas vagas</Badge>
+                    )}
                   </div>
 
                   {event.coverImage ? (
