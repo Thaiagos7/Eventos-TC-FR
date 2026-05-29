@@ -50,10 +50,10 @@ export function HeroSection() {
                   </Button>
                 </Link>
                 <div className="paper-note max-w-[14rem] rotate-[-2deg] px-4 py-3 text-left shadow-sm">
-                  <p className="font-display text-sm font-black uppercase tracking-[-0.03em] text-foreground">
+                  <p className="font-display text-sm font-black uppercase tracking-[-0.03em] text-slate-900">
                     Garante o teu lugar.
                   </p>
-                  <p className="mt-1 text-xs font-medium text-foreground/70">
+                  <p className="mt-1 text-xs font-medium text-slate-800">
                     Participa sem complicações.
                   </p>
                 </div>

@@ -183,7 +183,8 @@ const Dashboard = () => {
                       <div className="font-medium text-foreground line-clamp-1 text-safe">{event.title}</div>
                       <div className="text-sm text-muted-foreground">{event.organizerName}</div>
                     </td>
-                    <td className="py-4 px-5"><Badge variant={eventTypeColors[event.type]}>{event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}</Badge></td>
+                    <td className="py-4 px-5"><Badge variant={eventTypeColors[event.type]}
+                    className="text-slate-950 dark:text-slate-950">{event.type === 'other' && event.customType ? event.customType : eventTypeLabels[event.type]}</Badge></td>
                     <td className="py-4 px-5 text-sm">
                       <div>{format(event.date, "d MMM yyyy", { locale: pt })}</div>
                       <div className="text-muted-foreground">{event.time}</div>

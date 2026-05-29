@@ -136,9 +136,9 @@ const Login = () => {
                   <div className="paper-frame mx-auto max-w-[25rem] rotate-[-3deg] bg-white">
                     <img src={escolaBg} alt="Alunos na escola" className="h-64 w-full object-[40%_50%]" />
                   </div>
-                  <div className="paper-note ml-auto max-w-[14rem] rotate-[3deg] px-4 py-3 text-left text-foreground">
+                  <div className="paper-note ml-auto max-w-[14rem] rotate-[3deg] px-4 py-3 text-left text-slate-950">
                     <p className="font-display text-sm font-black uppercase tracking-[-0.03em]">Entre na sua conta</p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-foreground/70">Pra continuar.</p>
+                    <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-slate-800">Pra continuar.</p>
                   </div>
                 </div>
               </aside>
